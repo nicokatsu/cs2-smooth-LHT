@@ -23,7 +23,8 @@ namespace SmoothLHT.Systems
             "Offshore Oil Industry Placeholder",
             "Openwater Fish Farm Entrance",
             "Openwater Fishing Area Entrance",
-            "BusStation01"
+            "BusStation01",
+            "Pack10-OHSignature02_Ext02"
         };
 
 

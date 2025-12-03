@@ -56,7 +56,7 @@ uncheck LeftHand Traffic, place the building, then re-enable it.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/smooth-left-hand-traffic.1866601/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.1.1" />
+	<ModVersion Value="0.2.2" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.4.2*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -65,7 +65,7 @@ uncheck LeftHand Traffic, place the building, then re-enable it.
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
     <!--<ChangeLog Value="" />-->
-	<ChangeLog>- bug fixes
+	<ChangeLog>- Compatibility fix for Skyscraper &amp; supply chain DLCs
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/nicokatsu/cs2-smooth-LHT" />
