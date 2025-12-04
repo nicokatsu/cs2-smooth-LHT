@@ -1,5 +1,7 @@
 # Smooth Left-Hand Traffic (Experimental)
 
+**[Paradox Mod](https://mods.paradoxplaza.com/mods/123929/Windows)**
+
 This mod adjusts building prefabs to better support **Left-Hand Traffic (LHT)** cities.
 It **flips each building’s internal roads** and driveways when loading LHT saves so that **entrances and exits match the traffic direction** — preventing vehicle crossovers and twisted internal paths.
 
