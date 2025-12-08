@@ -16,6 +16,21 @@ Some mods already include separate LHT and RHT versions (for example, [Overgroun
 those will keep their original layout to avoid visual conflicts.
 
 
+### **Update: Per-Building Invert Toggle**
+
+With the release of the Asset Editor, many new assets will come — and not all of them behave well when their networks are inverted.
+This update adds a **new toolbar button** that lets you **toggle “Invert Networks” for each individual service building** (enabled by default).
+
+**What the toggle does:**
+- Changes the **inversion setting for each building and its in-place upgrade**. 
+- Useful if a specific asset breaks when inverted or simply doesn’t need inversion.
+- The invert toggle setting for each building **is saved** and will persist.
+
+**Important note:**
+- Changing the toggle will **affect all already-placed instances** of this building (and its upgrade).
+- Currently **does not support having both inverted and non-inverted versions** of the same building placed at the same time.
+- Switching the toggle may temporarily cause **pathfinding errors**. If that happens, **replacing the affected building or it's upgrade** will fix the issue.
+
 
 ## Experimental Notice
 This mod is still in testing.
@@ -31,20 +46,21 @@ Known problematic assets are already excluded, but if you encounter more, please
 
 
 ## Tips
-- If you temporarily need **RHT** buildings, go to Developer Mode → Gameplay tab,
-uncheck LeftHand Traffic, place the building, then re-enable it.
 - The mod only affects **Left-Hand Traffic saves** — Right-Hand saves are **unaffected**.
 - You can **freely switch** between LHT and RHT saves **without restarting or disabling** the mod.
 
 
-
 ### Credits
 - Implementation inspired by **StarQ**’s mod example.
-        
-    </LongDescription>
+- UI implementation references ideas from **Kemorno’s _Advanced Road Tools_**.
+- Uses **yenyang’s _VanillaComponentResolver_** for component resolution.
+
+
+	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
+	<Screenshot Value="Properties/Screenshots/00-tool-button.png" />
     <Screenshot Value="Properties/Screenshots/01-before01.png" />
     <Screenshot Value="Properties/Screenshots/02-after01.png" />
     <Screenshot Value="Properties/Screenshots/03-before02.png" />
@@ -56,7 +72,7 @@ uncheck LeftHand Traffic, place the building, then re-enable it.
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/smooth-left-hand-traffic.1866601/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.2.3" />
+	<ModVersion Value="0.3.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.2*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -65,7 +81,7 @@ uncheck LeftHand Traffic, place the building, then re-enable it.
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
     <!--<ChangeLog Value="" />-->
-	<ChangeLog>- Compatibility update for 1.5.2f1
+	<ChangeLog>- Add per-building invert toggle
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/nicokatsu/cs2-smooth-LHT" />

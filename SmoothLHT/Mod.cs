@@ -3,6 +3,7 @@ using Game;
 using Game.Modding;
 using Game.SceneFlow;
 using SmoothLHT.Systems;
+using SmoothLHT.UI;
 
 
 namespace SmoothLHT
@@ -10,6 +11,8 @@ namespace SmoothLHT
     public class Mod : IMod
     {
         public static ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
+        
+        public const string ModID =  "SmoothLHT";
 
         public void OnLoad(UpdateSystem updateSystem)
         {
@@ -18,7 +21,8 @@ namespace SmoothLHT
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");
             
-            updateSystem.UpdateAt<InvertPrefabLHT>(SystemUpdatePhase.PrefabUpdate);
+            updateSystem.UpdateAt<InvertPrefabLHTSystem>(SystemUpdatePhase.PrefabUpdate);
+            updateSystem.UpdateAt<InvertPrefabUISystem>(SystemUpdatePhase.UIUpdate);
         }
 
         public void OnDispose()
