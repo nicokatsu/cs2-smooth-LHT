@@ -21,7 +21,7 @@ namespace SmoothLHT.Utils
             File.WriteAllText(path, JSON.Dump(assets));
         }
 
-        public static HashSet<string> loadAssets()
+        public static HashSet<string> loadAssets(HashSet<string> defaultAssets)
         {
             var path = Path.Combine(folder, "non_inverted_assets.json");
             if (File.Exists(path))
@@ -29,7 +29,7 @@ namespace SmoothLHT.Utils
                 return JSON.MakeInto<HashSet<string>>(JSON.Load(File.ReadAllText(path)));
             }
 
-            return new HashSet<string>();
+            return defaultAssets;
         }
     }
 }

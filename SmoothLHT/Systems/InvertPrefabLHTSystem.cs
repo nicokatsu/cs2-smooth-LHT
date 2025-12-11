@@ -20,16 +20,19 @@ namespace SmoothLHT.Systems
 
         private static string[] ASSETS_PREFIX_SHOULD_NOT_INVERTED =
         {
-            "Dome Parking Hall",
             "Aquaculture Area Placeholder -Water",
             "Offshore Oil Industry Placeholder",
             "Openwater Fish Farm Entrance",
             "Openwater Fishing Area Entrance",
-            "BusStation01",
             "Pack10-OHSignature02_Ext02"
         };
-        
-        private HashSet<string> nonInvertedAssets;
+
+        private HashSet<string> nonInvertedAssets = new HashSet<string>()
+        {
+            "BusStation01 Extra Platforms",
+            "BusStation01 Taxi Stop",
+            "BusStation01"
+        };
 
         public HashSet<string> InvertibleAssets { get; } = new HashSet<string>();
 
@@ -45,7 +48,6 @@ namespace SmoothLHT.Systems
             log.Info($"Initializing {nameof(InvertPrefabLHTSystem)}");
             prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             World.GetOrCreateSystemManaged<CityConfigurationSystem>();
-            allAssets = SystemAPI.QueryBuilder().WithAllRW<PrefabData>().Build();
         }
 
         protected override void OnUpdate()
@@ -55,10 +57,10 @@ namespace SmoothLHT.Systems
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
             base.OnGamePreload(purpose, mode);
-            if (isAllInverted) return;
+            allAssets = SystemAPI.QueryBuilder().WithAllRW<PrefabData>().Build();
             var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
             log.Info($"Loaded {allAssetEntities.Length} assets");
-            nonInvertedAssets = FileUtil.loadAssets();
+            nonInvertedAssets = FileUtil.loadAssets(nonInvertedAssets);
             var ct = 0;
             foreach (var entity in allAssetEntities)
             {
@@ -71,10 +73,10 @@ namespace SmoothLHT.Systems
                         subNets is null
                        ) continue;
                     InvertibleAssets.Add(prefab.name);
-                    subNets.m_InvertWhen = !nonInvertedAssets.Contains(prefab.name)
+                    var invertMode = !nonInvertedAssets.Contains(prefab.name)
                         ? NetInvertMode.LefthandTraffic
                         : NetInvertMode.Never;
-                    prefabSystem.UpdatePrefab(prefab);
+                    invertUpdatePrefab(prefab, invertMode);
                     if (prefab is BuildingExtensionPrefab && prefab.TryGet(out ServiceUpgrade serviceUpgrade))
                     {
                         var buildings = serviceUpgrade.m_Buildings;
@@ -98,7 +100,6 @@ namespace SmoothLHT.Systems
                 }
             }
 
-            isAllInverted = true;
             log.Info($"Inverted {ct} assets");
         }
 
@@ -106,8 +107,7 @@ namespace SmoothLHT.Systems
         {
             if (prefab.TryGet(out ObjectSubNets subNets))
             {
-                subNets.m_InvertWhen = invertMode;
-                prefabSystem.UpdatePrefab(prefab);
+                invertUpdatePrefab(prefab, invertMode);
                 if (buildingUpgrades.TryGetValue(prefab.name, out List<PrefabBase> upgrades))
                 {
                     foreach (var upgrade in upgrades)
@@ -128,6 +128,15 @@ namespace SmoothLHT.Systems
                 FileUtil.saveAssets(nonInvertedAssets);
 
                 log.Info($"Inverted {prefab.name} {subNets.m_InvertWhen}");
+            }
+        }
+
+        private void invertUpdatePrefab(PrefabBase prefab, NetInvertMode invertMode)
+        {
+            if (prefab.TryGet(out ObjectSubNets subNets) && subNets.m_InvertWhen != invertMode)
+            {
+                subNets.m_InvertWhen = invertMode;
+                prefabSystem.UpdatePrefab(prefab);
             }
         }
     }
