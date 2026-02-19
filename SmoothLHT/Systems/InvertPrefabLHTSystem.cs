@@ -54,9 +54,9 @@ namespace SmoothLHT.Systems
         {
         }
 
-        protected override void OnGamePreload(Purpose purpose, GameMode mode)
+        protected override void OnGameLoaded(Context serializationContext)
         {
-            base.OnGamePreload(purpose, mode);
+            base.OnGameLoaded(serializationContext);
             allAssets = SystemAPI.QueryBuilder().WithAllRW<PrefabData>().Build();
             var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
             log.Info($"Loaded {allAssetEntities.Length} assets");
