@@ -16,7 +16,6 @@ namespace SmoothLHT.Systems
     {
         private PrefabSystem prefabSystem;
         private EntityQuery allAssets;
-        private bool isAllInverted;
 
         private static string[] ASSETS_PREFIX_SHOULD_NOT_INVERTED =
         {
@@ -47,21 +46,33 @@ namespace SmoothLHT.Systems
             base.OnCreate();
             log.Info($"Initializing {nameof(InvertPrefabLHTSystem)}");
             prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
-            World.GetOrCreateSystemManaged<CityConfigurationSystem>();
         }
 
         protected override void OnUpdate()
         {
         }
 
-        protected override void OnGameLoaded(Context serializationContext)
+        protected override void OnWorldReady()
         {
-            base.OnGameLoaded(serializationContext);
-            allAssets = SystemAPI.QueryBuilder().WithAllRW<PrefabData>().Build();
+            base.OnWorldReady();
+            log.Info($"on world ready");
+            invertAllPrefabs();
+        }
+
+        protected override void OnGamePreload(Purpose purpose, GameMode mode)
+        {
+            base.OnGamePreload(purpose, mode);
+            invertAllPrefabs();
+        }
+
+        private void invertAllPrefabs()
+        {
+            allAssets = SystemAPI.QueryBuilder().WithAll<PrefabData>().Build();
             var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
             log.Info($"Loaded {allAssetEntities.Length} assets");
             nonInvertedAssets = FileUtil.loadAssets(nonInvertedAssets);
             var ct = 0;
+            var ctu = 0;
             foreach (var entity in allAssetEntities)
             {
                 try
@@ -76,7 +87,7 @@ namespace SmoothLHT.Systems
                     var invertMode = !nonInvertedAssets.Contains(prefab.name)
                         ? NetInvertMode.LefthandTraffic
                         : NetInvertMode.Never;
-                    invertUpdatePrefab(prefab, invertMode);
+                    ct+=invertUpdatePrefab(prefab, invertMode);
                     if (prefab is BuildingExtensionPrefab && prefab.TryGet(out ServiceUpgrade serviceUpgrade))
                     {
                         var buildings = serviceUpgrade.m_Buildings;
@@ -88,11 +99,13 @@ namespace SmoothLHT.Systems
                                 buildingUpgrades[building.name] = upgrades;
                             }
 
-                            upgrades.Add(prefab);
+                            if (!upgrades.Contains(prefab))
+                            {
+                                upgrades.Add(prefab);
+                                ctu++;
+                            }
                         }
                     }
-
-                    ct++;
                 }
                 catch (Exception e)
                 {
@@ -101,6 +114,7 @@ namespace SmoothLHT.Systems
             }
 
             log.Info($"Inverted {ct} assets");
+            log.Info($"{ctu} upgrades mapped");
         }
 
         public void invertPrefab(PrefabBase prefab, NetInvertMode invertMode)
@@ -131,13 +145,16 @@ namespace SmoothLHT.Systems
             }
         }
 
-        private void invertUpdatePrefab(PrefabBase prefab, NetInvertMode invertMode)
+        private int invertUpdatePrefab(PrefabBase prefab, NetInvertMode invertMode)
         {
             if (prefab.TryGet(out ObjectSubNets subNets) && subNets.m_InvertWhen != invertMode)
             {
                 subNets.m_InvertWhen = invertMode;
                 prefabSystem.UpdatePrefab(prefab);
+                return 1;
             }
+
+            return 0;
         }
     }
 }

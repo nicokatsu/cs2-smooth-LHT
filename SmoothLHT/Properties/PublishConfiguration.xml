@@ -7,7 +7,7 @@
 	<ShortDescription Value="Flips building driveways for left-hand cities, keeping traffic flow smooth and aligned without crossovers." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
-	<LongDescription># Smooth Left-Hand Traffic (Experimental) 
+	<LongDescription># Smooth Left-Hand Traffic 
 This mod adjusts building prefabs to better support **Left-Hand Traffic (LHT)** cities.
 It **flips each building’s internal roads** and driveways when loading LHT saves so that **entrances and exits match the traffic direction** — preventing vehicle crossovers and twisted internal paths.
 
@@ -37,7 +37,8 @@ This mod is still in testing.
 Some assets may have:
 - unreachable internal paths,
 - or incorrectly flipped models that cause placement conflicts.
-- or ground arrows that display incorrectly after flipping (this does **not affect gameplay** and you can manually fix decals).
+- or ground arrows that display incorrectly after flipping (this does **not affect gameplay** and you can manually fix decals). 
+- or empty new signature buildings dialogs may pop up after you subscribe new assets and load a non-unlock-all city without restarting game, you can reload your save or restart game to solve the issue.
 
 Known problematic assets are already excluded, but if you encounter more, please leave feedback, so I can update the list.
 
@@ -72,7 +73,7 @@ Known problematic assets are already excluded, but if you encounter more, please
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/smooth-left-hand-traffic.1866601/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.3.2" />
+	<ModVersion Value="0.3.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.4*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -81,7 +82,7 @@ Known problematic assets are already excluded, but if you encounter more, please
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
     <!--<ChangeLog Value="" />-->
-	<ChangeLog>- fix issue of empty 'New Signature Building' dialog
+	<ChangeLog>- fix blank new signature building dialogs and traffic network disconnection
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/nicokatsu/cs2-smooth-LHT" />

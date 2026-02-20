@@ -9,8 +9,6 @@ namespace SmoothLHT.UI
 {
     public partial class InvertPrefabUISystem : UISystemBase
     {
-        private static ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
-
         private ValueBinding<bool> isShowing;
 
         private ValueBinding<int> isInverted;
