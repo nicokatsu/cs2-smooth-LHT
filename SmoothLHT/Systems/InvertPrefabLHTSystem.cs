@@ -1,12 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Colossal.Logging;
 using Colossal.Serialization.Entities;
 using Game;
-using Game.City;
 using Game.Prefabs;
-using SmoothLHT.Utils;
+using SmoothLHT.Services;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -14,10 +12,7 @@ namespace SmoothLHT.Systems
 {
     public partial class InvertPrefabLHTSystem : GameSystemBase
     {
-        private PrefabSystem prefabSystem;
-        private EntityQuery allAssets;
-
-        private static string[] ASSETS_PREFIX_SHOULD_NOT_INVERTED =
+        private static readonly string[] AssetsPrefixShouldNotBeInverted =
         {
             "Aquaculture Area Placeholder -Water",
             "Offshore Oil Industry Placeholder",
@@ -26,26 +21,32 @@ namespace SmoothLHT.Systems
             "Pack10-OHSignature02_Ext02"
         };
 
-        private HashSet<string> nonInvertedAssets = new HashSet<string>()
+        private static readonly ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
+
+        private static readonly string[] DefaultNonInvertedAssets =
         {
             "BusStation01 Extra Platforms",
             "BusStation01 Taxi Stop",
             "BusStation01"
         };
 
+        private PrefabSystem prefabSystem;
+        private EntityQuery allAssets;
+        private InvertPreferenceStore preferenceStore;
+        private InvertiblePrefabScanner prefabScanner;
+        private PrefabInvertService prefabInvertService;
+        private Dictionary<string, List<PrefabBase>> buildingUpgrades = new();
+
         public HashSet<string> InvertibleAssets { get; } = new HashSet<string>();
-
-        private Dictionary<string, List<PrefabBase>> buildingUpgrades = new Dictionary<string, List<PrefabBase>>();
-
-
-        private static ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
-
 
         protected override void OnCreate()
         {
             base.OnCreate();
             log.Info($"Initializing {nameof(InvertPrefabLHTSystem)}");
             prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            preferenceStore = new InvertPreferenceStore(DefaultNonInvertedAssets);
+            prefabScanner = new InvertiblePrefabScanner(prefabSystem, AssetsPrefixShouldNotBeInverted);
+            prefabInvertService = new PrefabInvertService(prefabSystem);
         }
 
         protected override void OnUpdate()
@@ -55,106 +56,50 @@ namespace SmoothLHT.Systems
         protected override void OnWorldReady()
         {
             base.OnWorldReady();
-            log.Info($"on world ready");
-            invertAllPrefabs();
+            log.Info("on world ready");
+            InvertAllPrefabs();
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
             base.OnGamePreload(purpose, mode);
-            invertAllPrefabs();
+            InvertAllPrefabs();
         }
 
-        private void invertAllPrefabs()
+        public void InvertPrefab(PrefabBase prefab, NetInvertMode invertMode)
         {
-            allAssets = SystemAPI.QueryBuilder().WithAll<PrefabData>().Build();
-            var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
-            log.Info($"Loaded {allAssetEntities.Length} assets");
-            nonInvertedAssets = FileUtil.loadAssets(nonInvertedAssets);
-            var ct = 0;
-            var ctu = 0;
-            foreach (var entity in allAssetEntities)
+            if (prefab is null || !prefab.TryGet(out ObjectSubNets subNets))
             {
-                try
-                {
-                    if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefab) ||
-                        prefab is not (BuildingPrefab or BuildingExtensionPrefab) ||
-                        ASSETS_PREFIX_SHOULD_NOT_INVERTED.Any(prefab.name.StartsWith) ||
-                        !prefab.TryGet(out ObjectSubNets subNets) ||
-                        subNets is null
-                       ) continue;
-                    InvertibleAssets.Add(prefab.name);
-                    var invertMode = !nonInvertedAssets.Contains(prefab.name)
-                        ? NetInvertMode.LefthandTraffic
-                        : NetInvertMode.Never;
-                    ct+=invertUpdatePrefab(prefab, invertMode);
-                    if (prefab is BuildingExtensionPrefab && prefab.TryGet(out ServiceUpgrade serviceUpgrade))
-                    {
-                        var buildings = serviceUpgrade.m_Buildings;
-                        foreach (var building in buildings)
-                        {
-                            if (!buildingUpgrades.TryGetValue(building.name, out List<PrefabBase> upgrades))
-                            {
-                                upgrades = new List<PrefabBase>();
-                                buildingUpgrades[building.name] = upgrades;
-                            }
-
-                            if (!upgrades.Contains(prefab))
-                            {
-                                upgrades.Add(prefab);
-                                ctu++;
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    log.Error($"Failed to invert prefab {entity}: {e}");
-                }
+                return;
             }
 
-            log.Info($"Inverted {ct} assets");
-            log.Info($"{ctu} upgrades mapped");
+            prefabInvertService.InvertPrefabAndUpgrades(prefab, invertMode, buildingUpgrades, preferenceStore);
+            log.Info($"Inverted {prefab.name} {subNets.m_InvertWhen}");
         }
 
-        public void invertPrefab(PrefabBase prefab, NetInvertMode invertMode)
+        private void InvertAllPrefabs()
         {
-            if (prefab.TryGet(out ObjectSubNets subNets))
+            allAssets = SystemAPI.QueryBuilder()
+                .WithAll<PrefabData>()
+                .WithAny<BuildingData, BuildingExtensionData>()
+                .Build();
+            using var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
+
+            preferenceStore.Load();
+            var scanResult = prefabScanner.Scan(allAssetEntities);
+
+            InvertibleAssets.Clear();
+            InvertibleAssets.UnionWith(scanResult.InvertibleAssets);
+            buildingUpgrades = scanResult.BuildingUpgrades;
+
+            try
             {
-                invertUpdatePrefab(prefab, invertMode);
-                if (buildingUpgrades.TryGetValue(prefab.name, out List<PrefabBase> upgrades))
-                {
-                    foreach (var upgrade in upgrades)
-                    {
-                        invertPrefab(upgrade, invertMode);
-                    }
-                }
-
-                if (invertMode == NetInvertMode.Never)
-                {
-                    nonInvertedAssets.Add(prefab.name);
-                }
-                else
-                {
-                    nonInvertedAssets.Remove(prefab.name);
-                }
-
-                FileUtil.saveAssets(nonInvertedAssets);
-
-                log.Info($"Inverted {prefab.name} {subNets.m_InvertWhen}");
+                prefabInvertService.ApplyPreferredInvertModes(scanResult.Prefabs, preferenceStore);
             }
-        }
-
-        private int invertUpdatePrefab(PrefabBase prefab, NetInvertMode invertMode)
-        {
-            if (prefab.TryGet(out ObjectSubNets subNets) && subNets.m_InvertWhen != invertMode)
+            catch (Exception e)
             {
-                subNets.m_InvertWhen = invertMode;
-                prefabSystem.UpdatePrefab(prefab);
-                return 1;
+                log.Error($"Failed to apply invert preferences: {e}");
             }
-
-            return 0;
         }
     }
 }

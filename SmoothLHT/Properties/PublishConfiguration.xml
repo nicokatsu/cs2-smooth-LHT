@@ -7,56 +7,16 @@
 	<ShortDescription Value="Flips building driveways for left-hand cities, keeping traffic flow smooth and aligned without crossovers." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
-	<LongDescription># Smooth Left-Hand Traffic 
-This mod adjusts building prefabs to better support **Left-Hand Traffic (LHT)** cities.
-It **flips each building’s internal roads** and driveways when loading LHT saves so that **entrances and exits match the traffic direction** — preventing vehicle crossovers and twisted internal paths.
+	<LongDescription># Smooth Left-Hand Traffic
+Smooth Left-Hand Traffic flips building internal roads and driveways for **LHT** cities so entrances and exits match traffic direction more cleanly.
 
-Works with **all building assets**, including mod ones.
-Some mods already include separate LHT and RHT versions (for example, [Overground Parking by Dome](https://mods.paradoxplaza.com/mods/81913/Windows));
-those will keep their original layout to avoid visual conflicts.
+It includes a toolbar toggle that lets you control inversion for **each asset and each upgrade separately**, and your choice is saved.
 
-
-### **Update: Per-Building Invert Toggle**
-
-With the release of the Asset Editor, many new assets will come — and not all of them behave well when their networks are inverted.
-This update adds a **new toolbar button** that lets you **toggle “Invert Networks” for each individual service building** (enabled by default).
-
-**What the toggle does:**
-- Changes the **inversion setting for each building and its in-place upgrade**. 
-- Useful if a specific asset breaks when inverted or simply doesn’t need inversion.
-- The invert toggle setting for each building **is saved** and will persist.
-
-**Important note:**
-- Changing the toggle will **affect all already-placed instances** of this building (and its upgrade).
-- Currently **does not support having both inverted and non-inverted versions** of the same building placed at the same time.
-- Switching the toggle may temporarily cause **pathfinding errors**. If that happens, **replacing the affected building or it's upgrade** will fix the issue.
-
-
-## Experimental Notice
-This mod is still in testing.
-Some assets may have:
-- unreachable internal paths,
-- or incorrectly flipped models that cause placement conflicts.
-- or ground arrows that display incorrectly after flipping (this does **not affect gameplay** and you can manually fix decals). 
-- or empty new signature buildings dialogs may pop up after you subscribe new assets and load a non-unlock-all city without restarting game, you can reload your save or restart game to solve the issue.
-
-Known problematic assets are already excluded, but if you encounter more, please leave feedback, so I can update the list.
-
-**Note:** Buildings **already placed** in your city will need to be **replaced** for the changes to take effect.
-
-
-
-## Tips
-- The mod only affects **Left-Hand Traffic saves** — Right-Hand saves are **unaffected**.
-- You can **freely switch** between LHT and RHT saves **without restarting or disabling** the mod.
-
-
-### Credits
-- Implementation inspired by **StarQ**’s mod example.
-- UI implementation references ideas from **Kemorno’s _Advanced Road Tools_**.
-- Uses **yenyang’s _VanillaComponentResolver_** for component resolution.
-
-
+### Important notes
+- Changing the setting affects **all already-placed instances** of that asset or upgrade.
+- Switching the setting may cause temporary **pathfinding conflicts**; replacing the affected building or upgrade usually fixes it.
+- The mod currently **does not support having both left-hand and right-hand versions of the same asset at the same time**.
+- The mod only affects **LHT saves**. RHT saves are unaffected.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
@@ -70,10 +30,12 @@ Known problematic assets are already excluded, but if you encounter more, please
     <Screenshot Value="Properties/Screenshots/06-after03.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
+	<Tag Value="UIRoads" />
+	<Tag Value="UITransportation" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/smooth-left-hand-traffic.1866601/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.3.3" />
+	<ModVersion Value="0.4.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.4*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -81,9 +43,7 @@ Known problematic assets are already excluded, but if you encounter more, please
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-    <!--<ChangeLog Value="" />-->
-	<ChangeLog>- fix blank new signature building dialogs and traffic network disconnection
-	</ChangeLog>
+	<ChangeLog>- Refined internal network detection and cleaned up logging.</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/nicokatsu/cs2-smooth-LHT" />
     <ExternalLink Type="discord" Url="https://discord.com/channels/1024242828114673724/1435174272166527037" />

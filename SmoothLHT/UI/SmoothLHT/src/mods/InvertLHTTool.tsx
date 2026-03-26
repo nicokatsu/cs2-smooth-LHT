@@ -1,43 +1,77 @@
-﻿import {ModuleRegistryExtend} from "cs2/modding";
-import {bindValue, trigger, useValue} from "cs2/api";
-import mod from "../../mod.json"
-import styles from "./InvertLHTTool.module.scss"
-import buttonImg from '../../imgs/button.svg'
-import {VanillaComponentResolver} from "./VanillaComponentResolver";
+import { bindValue, trigger, useValue } from "cs2/api";
+import { ModuleRegistryExtend } from "cs2/modding";
+import { Children, cloneElement, isValidElement, ReactElement, ReactNode } from "react";
+import mod from "../../mod.json";
+import buttonImg from "../../imgs/button.svg";
+import styles from "./InvertLHTTool.module.scss";
+import { VanillaComponentResolver } from "./VanillaComponentResolver";
 
-const isShowing$ = bindValue<boolean>(mod.id, 'IsShowing')
-const isInverted$ = bindValue<number>(mod.id, 'IsInverted')
+const SHOW_BINDING = bindValue<boolean>(mod.id, "IsShowing");
+const INVERT_MODE_BINDING = bindValue<number>(mod.id, "IsInverted");
 
-const toggleInverted = (val: number) => {
-    trigger(mod.id, 'ToggleInverted', val)
+const LEFT_HAND_TRAFFIC_MODE = 1;
+const DEFAULT_MODE = 0;
+const SECTION_TITLE = "LHT Invert Building Networks";
+const TOOLTIP_TEXT = "Changes apply to all existing instances of this building.";
+
+type ExtendableComponentResult = {
+    props?: {
+        children?: ReactNode;
+    };
+} & ReactElement;
+
+function updateInvertMode(nextMode: number) {
+    trigger(mod.id, "ToggleInverted", nextMode);
 }
-export const InvertLHTTool: ModuleRegistryExtend = (Component: any) => {
 
-    return (props) => {
-        const results = Component()
-
-        const isShowing = useValue(isShowing$);
-        const isInverted = useValue(isInverted$)
-        const handleToggle = () => {
-            toggleInverted(isInverted ? 0 : 1)
-        }
-
-        if (isShowing) {
-            results?.props?.children?.push?.(
-                <VanillaComponentResolver.instance.Section title="LHT Invert Buiding Networks">
-                    <VanillaComponentResolver.instance.ToolButton selected={isInverted === 1} onSelect={handleToggle}
-                                                                  src={buttonImg}
-                                                                  tooltip="Changes apply to all existing instances of this building."
-                                                                  focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED}
-                                                                  className={VanillaComponentResolver.instance.toolButtonTheme.ToolButton}><label
-                        className={styles.centeredContentButton}></label></VanillaComponentResolver.instance.ToolButton>
-
-                </VanillaComponentResolver.instance.Section>
-            )
-
-        }
-        return results
-
+function withAppendedToolSection(result: ExtendableComponentResult, section: JSX.Element) {
+    if (!isValidElement(result)) {
+        return result;
     }
 
+    const nextChildren = [...Children.toArray(result.props?.children), section];
+    return cloneElement(result, {
+        ...result.props,
+        children: nextChildren,
+    });
 }
+
+function InvertToggleSection({ isInverted, onToggle }: { isInverted: boolean; onToggle: () => void }) {
+    const vanilla = VanillaComponentResolver.instance;
+
+    return (
+        <vanilla.Section title={SECTION_TITLE}>
+            <vanilla.ToolButton
+                selected={isInverted}
+                onSelect={onToggle}
+                src={buttonImg}
+                tooltip={TOOLTIP_TEXT}
+                focusKey={vanilla.FOCUS_DISABLED}
+                className={vanilla.toolButtonTheme.ToolButton}
+            >
+                <span className={styles.centeredContentButton} />
+            </vanilla.ToolButton>
+        </vanilla.Section>
+    );
+}
+
+export const InvertLHTTool: ModuleRegistryExtend = (Component: any) => {
+    return (props) => {
+        const result = Component(props) as ExtendableComponentResult;
+        const isShowing = useValue(SHOW_BINDING);
+        const invertMode = useValue(INVERT_MODE_BINDING);
+        const isInverted = invertMode === LEFT_HAND_TRAFFIC_MODE;
+
+        if (!isShowing) {
+            return result;
+        }
+
+        return withAppendedToolSection(
+            result,
+            <InvertToggleSection
+                isInverted={isInverted}
+                onToggle={() => updateInvertMode(isInverted ? DEFAULT_MODE : LEFT_HAND_TRAFFIC_MODE)}
+            />
+        );
+    };
+};

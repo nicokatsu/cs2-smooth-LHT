@@ -10,9 +10,9 @@ namespace SmoothLHT
 {
     public class Mod : IMod
     {
-        public static ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
-        
-        public const string ModID =  "SmoothLHT";
+        public static readonly ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
+
+        public const string ModID = "SmoothLHT";
 
         public void OnLoad(UpdateSystem updateSystem)
         {

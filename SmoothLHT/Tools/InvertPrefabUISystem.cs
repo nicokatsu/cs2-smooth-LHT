@@ -1,4 +1,3 @@
-﻿using Colossal.Logging;
 using Colossal.UI.Binding;
 using Game.Prefabs;
 using Game.Tools;
@@ -10,14 +9,11 @@ namespace SmoothLHT.UI
     public partial class InvertPrefabUISystem : UISystemBase
     {
         private ValueBinding<bool> isShowing;
-
         private ValueBinding<int> isInverted;
-
 
         private InvertPrefabLHTSystem invertPrefabLHTSystem;
         private ToolSystem toolSystem;
         private PrefabBase currentPrefab;
-
 
         protected override void OnCreate()
         {
@@ -26,7 +22,6 @@ namespace SmoothLHT.UI
 
             AddBinding(isShowing = new ValueBinding<bool>(Mod.ModID, "IsShowing", false));
             AddBinding(isInverted = new ValueBinding<int>(Mod.ModID, "IsInverted", (int)NetInvertMode.LefthandTraffic));
-
             AddBinding(new TriggerBinding<int>(Mod.ModID, "ToggleInverted", ToggleInverted));
 
             toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
@@ -36,7 +31,12 @@ namespace SmoothLHT.UI
 
         private void ToggleInverted(int val)
         {
-            invertPrefabLHTSystem.invertPrefab(currentPrefab, (NetInvertMode)val);
+            if (currentPrefab is null)
+            {
+                return;
+            }
+
+            invertPrefabLHTSystem.InvertPrefab(currentPrefab, (NetInvertMode)val);
             isInverted.Update(val);
         }
 
@@ -45,27 +45,38 @@ namespace SmoothLHT.UI
             if (obj is ObjectToolSystem or UpgradeToolSystem && obj.GetPrefab())
             {
                 EventPrefabChanged(obj.GetPrefab());
+                return;
             }
-            else
-            {
-                isShowing.Update(false);
-            }
+
+            Hide();
         }
 
-        private void EventPrefabChanged(PrefabBase obj)
+        private void EventPrefabChanged(PrefabBase prefab)
         {
-            if (obj is BuildingPrefab or BuildingExtensionPrefab &&
-                invertPrefabLHTSystem.InvertibleAssets.Contains(obj.name) &&
-                obj.TryGet(out ObjectSubNets subNets))
+            if (!ShouldShowForPrefab(prefab, out var subNets))
             {
-                currentPrefab = obj;
-                isShowing.Update(true);
-                isInverted.Update((int)subNets.m_InvertWhen);
+                Hide();
+                return;
             }
-            else
-            {
-                isShowing.Update(false);
-            }
+
+            currentPrefab = prefab;
+            isShowing.Update(true);
+            isInverted.Update((int)subNets.m_InvertWhen);
+        }
+
+        private bool ShouldShowForPrefab(PrefabBase prefab, out ObjectSubNets subNets)
+        {
+            subNets = null;
+
+            return prefab is BuildingPrefab or BuildingExtensionPrefab &&
+                   invertPrefabLHTSystem.InvertibleAssets.Contains(prefab.name) &&
+                   prefab.TryGet(out subNets);
+        }
+
+        private void Hide()
+        {
+            currentPrefab = null;
+            isShowing.Update(false);
         }
     }
 }
