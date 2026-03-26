@@ -14,7 +14,8 @@
 
     <ItemGroup>
         <Reference Include="Colossal.PSI.Common">
-          <HintPath>D:\SteamLibrary\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.PSI.Common.dll</HintPath>
+            <HintPath>D:\SteamLibrary\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.PSI.Common.dll</HintPath>
+            <Private>false</Private>
         </Reference>
         <Reference Include="Colossal.UI.Binding">
             <Private>false</Private>
