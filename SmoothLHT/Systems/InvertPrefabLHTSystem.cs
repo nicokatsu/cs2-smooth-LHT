@@ -68,13 +68,49 @@ namespace SmoothLHT.Systems
 
         public void InvertPrefab(PrefabBase prefab, NetInvertMode invertMode)
         {
-            if (prefab is null || !prefab.TryGet(out ObjectSubNets subNets))
+            if (prefab is null)
             {
                 return;
             }
 
             prefabInvertService.InvertPrefabAndUpgrades(prefab, invertMode, buildingUpgrades, preferenceStore);
-            log.Info($"Inverted {prefab.name} {subNets.m_InvertWhen}");
+            log.Info($"Inverted {prefab.name} {invertMode}");
+        }
+
+        public bool TryGetInvertMode(PrefabBase prefab, out NetInvertMode invertMode)
+        {
+            invertMode = NetInvertMode.LefthandTraffic;
+
+            if (prefab is null || prefab is not BuildingPrefab and not BuildingExtensionPrefab)
+            {
+                return false;
+            }
+
+            if (InvertibleAssets.Contains(prefab.name) || HasInvertibleUpgrades(prefab))
+            {
+                invertMode = preferenceStore.GetDesiredInvertMode(prefab.name);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool HasInvertibleUpgrades(PrefabBase prefab)
+        {
+            if (!buildingUpgrades.TryGetValue(prefab.name, out var upgrades))
+            {
+                return false;
+            }
+
+            foreach (var upgrade in upgrades)
+            {
+                if (InvertibleAssets.Contains(upgrade.name))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void InvertAllPrefabs()

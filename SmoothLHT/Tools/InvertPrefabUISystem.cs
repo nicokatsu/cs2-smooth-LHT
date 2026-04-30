@@ -53,7 +53,7 @@ namespace SmoothLHT.UI
 
         private void EventPrefabChanged(PrefabBase prefab)
         {
-            if (!ShouldShowForPrefab(prefab, out var subNets))
+            if (!ShouldShowForPrefab(prefab, out var invertMode))
             {
                 Hide();
                 return;
@@ -61,16 +61,12 @@ namespace SmoothLHT.UI
 
             currentPrefab = prefab;
             isShowing.Update(true);
-            isInverted.Update((int)subNets.m_InvertWhen);
+            isInverted.Update((int)invertMode);
         }
 
-        private bool ShouldShowForPrefab(PrefabBase prefab, out ObjectSubNets subNets)
+        private bool ShouldShowForPrefab(PrefabBase prefab, out NetInvertMode invertMode)
         {
-            subNets = null;
-
-            return prefab is BuildingPrefab or BuildingExtensionPrefab &&
-                   invertPrefabLHTSystem.InvertibleAssets.Contains(prefab.name) &&
-                   prefab.TryGet(out subNets);
+            return invertPrefabLHTSystem.TryGetInvertMode(prefab, out invertMode);
         }
 
         private void Hide()
