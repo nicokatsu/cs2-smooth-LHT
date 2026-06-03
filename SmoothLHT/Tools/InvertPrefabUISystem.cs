@@ -2,6 +2,7 @@ using Colossal.UI.Binding;
 using Game.Prefabs;
 using Game.Tools;
 using Game.UI;
+using SmoothLHT.Services;
 using SmoothLHT.Systems;
 
 namespace SmoothLHT.UI
@@ -33,18 +34,33 @@ namespace SmoothLHT.UI
         {
             if (currentPrefab is null)
             {
+                Mod.log.Info($"[UI] Ignoring invert toggle value={val} because no current prefab is selected");
                 return;
             }
 
-            invertPrefabLHTSystem.InvertPrefab(currentPrefab, (NetInvertMode)val);
+            var invertMode = (NetInvertMode)val;
+            if (!InvertModePolicy.IsSupported(invertMode))
+            {
+                Mod.log.Info($"[UI] [ERROR] Ignoring unsupported invert mode value={val} for prefab={currentPrefab.name}");
+                return;
+            }
+
+            invertPrefabLHTSystem.InvertPrefab(currentPrefab, invertMode);
             isInverted.Update(val);
         }
 
         private void EventToolChanged(ToolBaseSystem obj)
         {
-            if (obj is ObjectToolSystem or UpgradeToolSystem && obj.GetPrefab())
+            if (obj is not ObjectToolSystem and not UpgradeToolSystem)
             {
-                EventPrefabChanged(obj.GetPrefab());
+                Hide();
+                return;
+            }
+
+            var prefab = obj.GetPrefab();
+            if (prefab)
+            {
+                EventPrefabChanged(prefab);
                 return;
             }
 

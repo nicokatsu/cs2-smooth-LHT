@@ -30,4 +30,4 @@ It flips supported building networks so entrances and exits line up better with 
 
 - Inspired by **StarQ**'s mod example.
 - UI approach references ideas from **Kemorno's Advanced Road Tools**.
-- Uses **yenyang's VanillaComponentResolver** for UI component resolution.
+- Resolves vanilla toolbar UI through the official CS2 module registry.

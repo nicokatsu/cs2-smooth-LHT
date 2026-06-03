@@ -24,14 +24,17 @@ namespace SmoothLHT.Services
             return updatedCount;
         }
 
-        public void InvertPrefabAndUpgrades(
+        public PrefabInvertResult InvertPrefabAndUpgrades(
             PrefabBase prefab,
             NetInvertMode invertMode,
             IReadOnlyDictionary<string, List<PrefabBase>> buildingUpgrades,
             InvertPreferenceStore preferenceStore)
         {
-            ApplyInvertModeRecursively(prefab, invertMode, buildingUpgrades, preferenceStore, new HashSet<string>());
+            var result = new PrefabInvertResult();
+            ApplyInvertModeRecursively(prefab, invertMode, buildingUpgrades, preferenceStore, new HashSet<string>(), result);
             preferenceStore.Save();
+            result.SavedNonInvertedPreferenceCount = preferenceStore.NonInvertedAssets.Count;
+            return result;
         }
 
         private void ApplyInvertModeRecursively(
@@ -39,14 +42,16 @@ namespace SmoothLHT.Services
             NetInvertMode invertMode,
             IReadOnlyDictionary<string, List<PrefabBase>> buildingUpgrades,
             InvertPreferenceStore preferenceStore,
-            HashSet<string> visitedPrefabNames)
+            HashSet<string> visitedPrefabNames,
+            PrefabInvertResult result)
         {
             if (prefab is null || !visitedPrefabNames.Add(prefab.name))
             {
                 return;
             }
 
-            UpdatePrefabInvertMode(prefab, invertMode);
+            result.VisitedPrefabCount++;
+            result.UpdatedPrefabCount += UpdatePrefabInvertMode(prefab, invertMode);
             preferenceStore.SetInvertMode(prefab.name, invertMode);
 
             if (!buildingUpgrades.TryGetValue(prefab.name, out var upgrades))
@@ -56,7 +61,7 @@ namespace SmoothLHT.Services
 
             foreach (var upgrade in upgrades)
             {
-                ApplyInvertModeRecursively(upgrade, invertMode, buildingUpgrades, preferenceStore, visitedPrefabNames);
+                ApplyInvertModeRecursively(upgrade, invertMode, buildingUpgrades, preferenceStore, visitedPrefabNames, result);
             }
         }
 
@@ -71,5 +76,14 @@ namespace SmoothLHT.Services
 
             return 0;
         }
+    }
+
+    public class PrefabInvertResult
+    {
+        public int VisitedPrefabCount { get; set; }
+
+        public int UpdatedPrefabCount { get; set; }
+
+        public int SavedNonInvertedPreferenceCount { get; set; }
     }
 }

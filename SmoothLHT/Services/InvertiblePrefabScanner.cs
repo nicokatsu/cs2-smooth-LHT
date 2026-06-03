@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Game.City;
 using Game.Prefabs;
 using Unity.Collections;
@@ -23,35 +23,80 @@ namespace SmoothLHT.Services
             var invertibleAssets = new HashSet<string>();
             var buildingUpgrades = new Dictionary<string, List<PrefabBase>>();
             var prefabs = new List<PrefabBase>();
+            var skippedPrefabs = new Dictionary<PrefabSkipReason, int>();
+            var mappedUpgradeCount = 0;
 
             foreach (var entity in assetEntities)
             {
-                if (!TryGetInvertiblePrefab(entity, out var prefab))
+                if (!TryGetInvertiblePrefab(entity, out var prefab, out var skipReason))
                 {
+                    AddSkip(skippedPrefabs, skipReason);
                     continue;
                 }
 
                 invertibleAssets.Add(prefab.name);
                 prefabs.Add(prefab);
-                MapBuildingUpgrades(prefab, buildingUpgrades);
+                mappedUpgradeCount += MapBuildingUpgrades(prefab, buildingUpgrades);
             }
 
             return new PrefabScanResult(
                 prefabs,
                 invertibleAssets,
-                buildingUpgrades);
+                buildingUpgrades,
+                assetEntities.Length,
+                skippedPrefabs,
+                mappedUpgradeCount);
         }
 
-        private bool TryGetInvertiblePrefab(Entity entity, out PrefabBase prefab)
+        private bool TryGetInvertiblePrefab(Entity entity, out PrefabBase prefab, out PrefabSkipReason skipReason)
         {
             prefab = null;
+            skipReason = PrefabSkipReason.None;
 
-            return prefabSystem.TryGetPrefab(entity, out prefab) &&
-                   prefab is BuildingPrefab or BuildingExtensionPrefab &&
-                   !ignoredPrefabNamePrefixes.Any(prefab.name.StartsWith) &&
-                   prefab.TryGet(out ObjectSubNets subNets) &&
-                   subNets is not null &&
-                   HasSupportedTransportKinds(subNets);
+            if (!prefabSystem.TryGetPrefab(entity, out prefab))
+            {
+                skipReason = PrefabSkipReason.MissingPrefab;
+                return false;
+            }
+
+            if (prefab is not BuildingPrefab and not BuildingExtensionPrefab)
+            {
+                skipReason = PrefabSkipReason.UnsupportedPrefabType;
+                return false;
+            }
+
+            if (HasIgnoredPrefix(prefab.name))
+            {
+                skipReason = PrefabSkipReason.IgnoredPrefix;
+                return false;
+            }
+
+            if (!prefab.TryGet(out ObjectSubNets subNets) || subNets is null)
+            {
+                skipReason = PrefabSkipReason.MissingObjectSubNets;
+                return false;
+            }
+
+            if (!HasSupportedTransportKinds(subNets))
+            {
+                skipReason = PrefabSkipReason.UnsupportedTransportKinds;
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool HasIgnoredPrefix(string prefabName)
+        {
+            foreach (var ignoredPrefix in ignoredPrefabNamePrefixes)
+            {
+                if (prefabName.StartsWith(ignoredPrefix, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool HasSupportedTransportKinds(ObjectSubNets subNets)
@@ -133,13 +178,19 @@ namespace SmoothLHT.Services
             return transportKinds;
         }
 
-        private static void MapBuildingUpgrades(PrefabBase prefab, Dictionary<string, List<PrefabBase>> buildingUpgrades)
+        private static int MapBuildingUpgrades(PrefabBase prefab, Dictionary<string, List<PrefabBase>> buildingUpgrades)
         {
             if (prefab is not BuildingExtensionPrefab || !prefab.TryGet(out ServiceUpgrade serviceUpgrade))
             {
-                return;
+                return 0;
             }
 
+            if (serviceUpgrade.m_Buildings is null)
+            {
+                return 0;
+            }
+
+            var mappedCount = 0;
             foreach (var building in serviceUpgrade.m_Buildings)
             {
                 if (!buildingUpgrades.TryGetValue(building.name, out var upgrades))
@@ -151,9 +202,33 @@ namespace SmoothLHT.Services
                 if (!upgrades.Contains(prefab))
                 {
                     upgrades.Add(prefab);
+                    mappedCount++;
                 }
             }
+
+            return mappedCount;
         }
+
+        private static void AddSkip(Dictionary<PrefabSkipReason, int> skippedPrefabs, PrefabSkipReason skipReason)
+        {
+            if (skipReason == PrefabSkipReason.None)
+            {
+                return;
+            }
+
+            skippedPrefabs.TryGetValue(skipReason, out var count);
+            skippedPrefabs[skipReason] = count + 1;
+        }
+    }
+
+    public enum PrefabSkipReason
+    {
+        None = 0,
+        MissingPrefab = 1,
+        UnsupportedPrefabType = 2,
+        IgnoredPrefix = 3,
+        MissingObjectSubNets = 4,
+        UnsupportedTransportKinds = 5
     }
 
     [System.Flags]
@@ -170,11 +245,17 @@ namespace SmoothLHT.Services
         public PrefabScanResult(
             List<PrefabBase> prefabs,
             HashSet<string> invertibleAssets,
-            Dictionary<string, List<PrefabBase>> buildingUpgrades)
+            Dictionary<string, List<PrefabBase>> buildingUpgrades,
+            int scannedEntityCount,
+            Dictionary<PrefabSkipReason, int> skippedPrefabs,
+            int mappedUpgradeCount)
         {
             Prefabs = prefabs;
             InvertibleAssets = invertibleAssets;
             BuildingUpgrades = buildingUpgrades;
+            ScannedEntityCount = scannedEntityCount;
+            SkippedPrefabs = skippedPrefabs;
+            MappedUpgradeCount = mappedUpgradeCount;
         }
 
         public List<PrefabBase> Prefabs { get; }
@@ -182,5 +263,11 @@ namespace SmoothLHT.Services
         public HashSet<string> InvertibleAssets { get; }
 
         public Dictionary<string, List<PrefabBase>> BuildingUpgrades { get; }
+
+        public int ScannedEntityCount { get; }
+
+        public Dictionary<PrefabSkipReason, int> SkippedPrefabs { get; }
+
+        public int MappedUpgradeCount { get; }
     }
 }

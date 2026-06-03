@@ -30,28 +30,40 @@ namespace SmoothLHT.Services
             if (!File.Exists(path))
             {
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
+                log.Info($"[Preferences] No persisted preferences at {path}; using defaults count={NonInvertedAssets.Count}");
                 return;
             }
 
             try
             {
-                NonInvertedAssets = JSON.MakeInto<HashSet<string>>(JSON.Load(File.ReadAllText(path)));
+                NonInvertedAssets = JSON.MakeInto<HashSet<string>>(JSON.Load(File.ReadAllText(path))) ??
+                                    new HashSet<string>(defaultNonInvertedAssets);
+                log.Info($"[Preferences] Loaded non-inverted assets count={NonInvertedAssets.Count} from {path}");
             }
             catch (IOException e)
             {
-                log.Error($"Failed to read non-inverted assets from {path}: {e}");
+                log.Info($"[ERROR] Failed to read non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}: {e}");
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
             }
             catch (Exception e)
             {
-                log.Error($"Failed to parse non-inverted assets from {path}: {e}");
+                log.Info($"[ERROR] Failed to parse non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}: {e}");
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
             }
         }
 
         public void Save()
         {
-            File.WriteAllText(GetStoragePath(), JSON.Dump(NonInvertedAssets));
+            var path = GetStoragePath();
+            try
+            {
+                File.WriteAllText(path, JSON.Dump(NonInvertedAssets));
+                log.Info($"[Preferences] Saved non-inverted assets count={NonInvertedAssets.Count} to {path}");
+            }
+            catch (Exception e)
+            {
+                log.Info($"[ERROR] Failed to save non-inverted assets count={NonInvertedAssets.Count} to {path}: {e}");
+            }
         }
 
         public NetInvertMode GetDesiredInvertMode(string prefabName)

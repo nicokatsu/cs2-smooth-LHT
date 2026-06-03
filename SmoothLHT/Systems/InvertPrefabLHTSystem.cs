@@ -56,13 +56,14 @@ namespace SmoothLHT.Systems
         protected override void OnWorldReady()
         {
             base.OnWorldReady();
-            log.Info("on world ready");
+            log.Info("[Lifecycle] OnWorldReady: refreshing prefab invert modes");
             InvertAllPrefabs();
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
             base.OnGamePreload(purpose, mode);
+            log.Info($"[Lifecycle] OnGamePreload purpose={purpose} mode={mode}: refreshing prefab invert modes");
             InvertAllPrefabs();
         }
 
@@ -70,11 +71,18 @@ namespace SmoothLHT.Systems
         {
             if (prefab is null)
             {
+                log.Info("[Toggle] Skipped invert request because prefab is null");
                 return;
             }
 
-            prefabInvertService.InvertPrefabAndUpgrades(prefab, invertMode, buildingUpgrades, preferenceStore);
-            log.Info($"Inverted {prefab.name} {invertMode}");
+            if (!InvertModePolicy.IsSupported(invertMode))
+            {
+                log.Info($"[ERROR] Ignoring unsupported invert mode {invertMode} for prefab={prefab.name}");
+                return;
+            }
+
+            var result = prefabInvertService.InvertPrefabAndUpgrades(prefab, invertMode, buildingUpgrades, preferenceStore);
+            log.Info($"[Toggle] Applied invert mode prefab={prefab.name} mode={invertMode} visited={result.VisitedPrefabCount} updated={result.UpdatedPrefabCount} nonInvertedPreferences={result.SavedNonInvertedPreferenceCount}");
         }
 
         public bool TryGetInvertMode(PrefabBase prefab, out NetInvertMode invertMode)
@@ -121,6 +129,7 @@ namespace SmoothLHT.Systems
                 .Build();
             using var allAssetEntities = allAssets.ToEntityArray(Allocator.Temp);
 
+            log.Info($"[Scan] Starting prefab scan candidateEntities={allAssetEntities.Length}");
             preferenceStore.Load();
             var scanResult = prefabScanner.Scan(allAssetEntities);
 
@@ -128,14 +137,33 @@ namespace SmoothLHT.Systems
             InvertibleAssets.UnionWith(scanResult.InvertibleAssets);
             buildingUpgrades = scanResult.BuildingUpgrades;
 
+            log.Info($"[Scan] Completed scanned={scanResult.ScannedEntityCount} invertible={scanResult.Prefabs.Count} upgradeHosts={scanResult.BuildingUpgrades.Count} upgradeLinks={scanResult.MappedUpgradeCount} skipped={FormatSkipCounts(scanResult.SkippedPrefabs)}");
+
             try
             {
-                prefabInvertService.ApplyPreferredInvertModes(scanResult.Prefabs, preferenceStore);
+                var updatedCount = prefabInvertService.ApplyPreferredInvertModes(scanResult.Prefabs, preferenceStore);
+                log.Info($"[Apply] Applied preferred invert modes candidates={scanResult.Prefabs.Count} updated={updatedCount} nonInvertedPreferences={preferenceStore.NonInvertedAssets.Count}");
             }
             catch (Exception e)
             {
-                log.Error($"Failed to apply invert preferences: {e}");
+                log.Info($"[ERROR] Failed to apply invert preferences: {e}");
             }
+        }
+
+        private static string FormatSkipCounts(Dictionary<PrefabSkipReason, int> skippedPrefabs)
+        {
+            if (skippedPrefabs.Count == 0)
+            {
+                return "none";
+            }
+
+            var parts = new List<string>();
+            foreach (var skippedPrefab in skippedPrefabs)
+            {
+                parts.Add($"{skippedPrefab.Key}={skippedPrefab.Value}");
+            }
+
+            return string.Join(", ", parts);
         }
     }
 }
