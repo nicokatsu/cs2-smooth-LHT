@@ -34,14 +34,14 @@ namespace SmoothLHT.UI
         {
             if (currentPrefab is null)
             {
-                Mod.log.Info($"[UI] Ignoring invert toggle value={val} because no current prefab is selected");
+                Mod.LogDiagnostic($"[UI] Ignoring invert toggle value={val} because no current prefab is selected");
                 return;
             }
 
             var invertMode = (NetInvertMode)val;
             if (!InvertModePolicy.IsSupported(invertMode))
             {
-                Mod.log.Info($"[UI] [ERROR] Ignoring unsupported invert mode value={val} for prefab={currentPrefab.name}");
+                Mod.LogEssential($"[UI] [ERROR] Ignoring unsupported invert mode value={val} for prefab={currentPrefab.name}");
                 return;
             }
 

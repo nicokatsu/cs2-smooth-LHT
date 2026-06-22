@@ -35,16 +35,16 @@ It includes a toolbar toggle that lets you control inversion for **each asset an
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/smooth-left-hand-traffic.1866601/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.5.0" />
+	<ModVersion Value="0.5.1" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.5.*" />
+	<GameVersion Value="1.6.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog>- Updated compatibility for game version 1.5.7f1.
-- Fixed the inversion toggle for buildings whose upgrades contain internal networks.</ChangeLog>
+	<ChangeLog>- Refactored internal logging and diagnostics.
+- Updated compatibility for game version 1.6.0f1.</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/nicokatsu/cs2-smooth-LHT" />
     <ExternalLink Type="discord" Url="https://discord.com/channels/1024242828114673724/1435174272166527037" />

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Colossal.Json;
-using Colossal.Logging;
 using Colossal.PSI.Environment;
 using Game.Prefabs;
 
@@ -11,7 +10,6 @@ namespace SmoothLHT.Services
     public class InvertPreferenceStore
     {
         private const string NonInvertedAssetsFileName = "non_inverted_assets.json";
-        private static readonly ILog log = LogManager.GetLogger($"{nameof(SmoothLHT)}").SetShowsErrorsInUI(false);
         private readonly HashSet<string> defaultNonInvertedAssets;
         private readonly string storageFolder;
 
@@ -30,7 +28,7 @@ namespace SmoothLHT.Services
             if (!File.Exists(path))
             {
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
-                log.Info($"[Preferences] No persisted preferences at {path}; using defaults count={NonInvertedAssets.Count}");
+                Mod.LogDiagnostic($"[Preferences] No persisted preferences at {path}; using defaults count={NonInvertedAssets.Count}");
                 return;
             }
 
@@ -38,16 +36,16 @@ namespace SmoothLHT.Services
             {
                 NonInvertedAssets = JSON.MakeInto<HashSet<string>>(JSON.Load(File.ReadAllText(path))) ??
                                     new HashSet<string>(defaultNonInvertedAssets);
-                log.Info($"[Preferences] Loaded non-inverted assets count={NonInvertedAssets.Count} from {path}");
+                Mod.LogDiagnostic($"[Preferences] Loaded non-inverted assets count={NonInvertedAssets.Count} from {path}");
             }
             catch (IOException e)
             {
-                log.Info($"[ERROR] Failed to read non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}: {e}");
+                Mod.LogException(e, $"Failed to read non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}.");
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
             }
             catch (Exception e)
             {
-                log.Info($"[ERROR] Failed to parse non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}: {e}");
+                Mod.LogException(e, $"Failed to parse non-inverted assets from {path}; using defaults count={defaultNonInvertedAssets.Count}.");
                 NonInvertedAssets = new HashSet<string>(defaultNonInvertedAssets);
             }
         }
@@ -58,11 +56,11 @@ namespace SmoothLHT.Services
             try
             {
                 File.WriteAllText(path, JSON.Dump(NonInvertedAssets));
-                log.Info($"[Preferences] Saved non-inverted assets count={NonInvertedAssets.Count} to {path}");
+                Mod.LogDiagnostic($"[Preferences] Saved non-inverted assets count={NonInvertedAssets.Count} to {path}");
             }
             catch (Exception e)
             {
-                log.Info($"[ERROR] Failed to save non-inverted assets count={NonInvertedAssets.Count} to {path}: {e}");
+                Mod.LogException(e, $"Failed to save non-inverted assets count={NonInvertedAssets.Count} to {path}.");
             }
         }
 

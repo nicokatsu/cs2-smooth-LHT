@@ -1,5 +1,7 @@
 ﻿using Colossal.Logging;
 using Game;
+using System;
+using System.Diagnostics;
 using Game.Modding;
 using Game.SceneFlow;
 using SmoothLHT.Systems;
@@ -16,10 +18,10 @@ namespace SmoothLHT
 
         public void OnLoad(UpdateSystem updateSystem)
         {
-            log.Info(nameof(OnLoad));
+            LogEssential(nameof(OnLoad));
 
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
-                log.Info($"Current mod asset at {asset.path}");
+                LogEssential($"Current mod asset at {asset.path}");
             
             updateSystem.UpdateAt<InvertPrefabLHTSystem>(SystemUpdatePhase.PrefabUpdate);
             updateSystem.UpdateAt<InvertPrefabUISystem>(SystemUpdatePhase.UIUpdate);
@@ -27,7 +29,23 @@ namespace SmoothLHT
 
         public void OnDispose()
         {
-            log.Info(nameof(OnDispose));
+            LogEssential(nameof(OnDispose));
+        }
+
+        internal static void LogEssential(string message)
+        {
+            log.Info(message);
+        }
+
+        [Conditional("DEBUG")]
+        internal static void LogDiagnostic(string message)
+        {
+            log.Info(message);
+        }
+
+        internal static void LogException(Exception exception, string message)
+        {
+            log.Info(exception, $"[ERROR] {message}");
         }
     }
 }

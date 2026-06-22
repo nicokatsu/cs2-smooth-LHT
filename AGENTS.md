@@ -206,6 +206,12 @@ Current known release line:
 
 ## Logs And Troubleshooting
 
+Logging policy:
+
+- Route code through `Mod.LogEssential`, `Mod.LogDiagnostic`, or `Mod.LogException`; avoid direct `Mod.log.Info`/local logger calls outside the wrapper.
+- Release builds should only emit essential lifecycle, user action, and failure logs. Debug builds emit diagnostic logs through `[Conditional("DEBUG")]` `LogDiagnostic` calls.
+- Keep all mod diagnostics at `Info` level. Use `[ERROR]` in the message/wrapper for failure severity instead of warning/error logger levels.
+
 Useful log locations:
 
 - `C:\Users\glydd\AppData\LocalLow\Colossal Order\Cities Skylines II\Logs\SmoothLHT.log`
